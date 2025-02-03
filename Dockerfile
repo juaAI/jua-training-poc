@@ -1,39 +1,55 @@
-FROM --platform=linux/amd64 python:3.11-slim
+FROM pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
 
-# Python setup
-ENV PYTHONFAULTHANDLER=1 \
-    PYTHONUNBUFFERED=1 \
-    PYTHONHASHSEED=random \
-    PYTHONDONTWRITEBYTECODE=1 \
-    # pip:
-    PIP_NO_CACHE_DIR=off \
-    PIP_DISABLE_PIP_VERSION_CHECK=on \
-    PIP_DEFAULT_TIMEOUT=100 \
-    # poetry:
-    POETRY_VERSION=1.8.2 \
-    POETRY_NO_INTERACTION=1 \
-    POETRY_CACHE_DIR='/var/cache/pypoetry' \
-    PATH="$PATH:/root/.local/bin"
+WORKDIR /app
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-    git vim build-essential \
+# Set timezone non-interactively
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+
+# Install system dependencies and Python 3.11
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    software-properties-common \
+    && add-apt-repository ppa:deadsnakes/ppa \
+    && apt-get update \
+    && apt-get install -y \
+    python3.11 \
+    python3.11-distutils \
+    python3.11-dev \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
+# Set Python 3.11 as default
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 \
+    && update-alternatives --set python3 /usr/bin/python3.11 \
+    && ln -sf /usr/bin/python3 /usr/bin/python
+
+# Install pip for Python 3.11
+RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
+
 # Install poetry
-RUN pip install poetry==$POETRY_VERSION && \
-    poetry --no-cache self add poetry-plugin-bundle poetry-plugin-export && \
-    poetry cache clear --no-interaction --all .
+RUN curl -sSL https://install.python-poetry.org | python3.11 -
 
-COPY . .
+# Add poetry to PATH
+ENV PATH="/root/.local/bin:$PATH"
 
-# Prepare base venv
-RUN ./scripts/prepare-base-venv.sh /venv
+# Configure poetry to use Python 3.11
+ENV POETRY_PYTHON=/usr/bin/python3.11
+
+# Copy project files
+COPY pyproject.toml poetry.lock ./
+
+# Configure poetry to not create virtual environment
+RUN poetry config virtualenvs.create false
 
 # Install dependencies
-RUN poetry --no-cache bundle venv --with=profiling --with=validation /venv && poetry cache clear --no-interaction --all .
+RUN poetry install --no-root
 
-ENV PATH=/venv/bin:${PATH}
+# Copy source code
+COPY . .
 
-ENTRYPOINT []
-CMD []
+# Install project
+RUN poetry install
+
+ENTRYPOINT ["poetry", "run", "accelerate", "launch", "source/trainer.py"]

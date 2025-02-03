@@ -35,6 +35,8 @@ from source.modules.metrics.mse import lat_weighted_loss
 from source.modules.optimizers.adam import get_optimizer
 from source.modules.schedulers.cosine_annealing import CosineAnnealingWithWarmup
 
+logging.basicConfig(level=logging.INFO)
+
 def get_accelerator(gradient_accumulation_steps: int) -> Accelerator:
     distributed_data_parallel_kwargs = DistributedDataParallelKwargs(
         find_unused_parameters=True
@@ -202,8 +204,6 @@ class Trainer:
             self.train_current_epoch()
             self.accelerator.wait_for_everyone()
 
-            
-
     def train_current_epoch(self):
         progress_bar = None
         self.last_reported = 0
@@ -346,7 +346,7 @@ def main():
     )
     parser.add_argument(
         "--wandb_group",
-        required=True,
+        required=False,
         type=str,
         help="The wandb group - use the experiment code like 'exp-123'",
     )

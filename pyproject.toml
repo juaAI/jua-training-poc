@@ -28,6 +28,7 @@ pydantic = "^2.10.6"
 xarray = {extras = ["zarr"], version = "^2025.1.2"}
 zarr = "^3.0.2"
 wandb = "^0.19.5"
+matplotlib = "^3.10.0"
 
 [[tool.poetry.source]]
 name = "pytorch"
