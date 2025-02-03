@@ -1,0 +1,21 @@
+[lint]
+extend-ignore = [
+    "N812",   # Lowercase `functional` imported as non-lowercase `F`
+    "E402",   # module level import not at top of file (allow us to specify PYTORCH_CUDA_ALLOC_CONF before importing torch)
+    "PLR0913", # max-args for pylint - we should consider using dataclasses for model config at some point
+    "C408",    # Using dict() instead of a dict literal {} can look nicer
+    "UP031",   # Avoid this error to allow html actions on the streamlit app
+]
+
+"modules/patching/level_patchembed.py" = [
+    "SLF001", # Private member accessed
+]
+
+"models/climax.py" = [
+    "N806", # Upper-case variables match formula definitions
+]
+
+"modules/patching/parallelpatchembed.py" = [
+    "N806", # Upper-case variables match formula definitions
+    "SLF001", # Private member accessed
+]

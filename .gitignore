@@ -27,3 +27,5 @@ cdk.out/
 # VS Code
 .vscode
 
+# wandb
+wandb/
