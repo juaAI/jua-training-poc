@@ -36,7 +36,6 @@ url = "https://download.pytorch.org/whl/cu121"
 priority = "explicit"
 
 [tool.poetry.group.format.dependencies]
-black = "^22.10.0"
 isort = "^5.10.1"
 ruff = "0.0.254"
 
