@@ -97,7 +97,7 @@ if __name__ == "__main__":
         "--kill-on-bad-exit",
         f"--chdir={run_path}",
         f"--output={run_path}/attempt-$ATTEMPT.log",
-        "./docker_runner.py",
+        "./launch_srun.py",
         *run_args,
     ]
     srun_command = " ".join(srun_command_parts)
@@ -146,8 +146,8 @@ if __name__ == "__main__":
     run_path.mkdir(parents=True)
 
     # Copy all necessary files for Docker build
-    worker_file = run_path / "docker_runner.py"
-    shutil.copy2(SCRIPT_ROOT / "docker_runner.py", worker_file)
+    worker_file = run_path / "launch_srun.py"
+    shutil.copy2(SCRIPT_ROOT / "launch_srun.py", worker_file)
     shutil.copy2(SCRIPT_ROOT / "Dockerfile", run_path / "Dockerfile")
     
     # Copy source code and requirements
