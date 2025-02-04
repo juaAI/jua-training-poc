@@ -24,11 +24,6 @@ Install initial dependencies:
 poetry install
 ```
 
-Add the `poetry-exec-plugin` plugin:
-```bash
-poetry self add poetry-exec-plugin
-```
-
 To run the training script, use the following command:
 ```bash
 poetry run accelerate launch source/trainer.py --config configs/tiny_model_local.yaml
