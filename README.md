@@ -73,14 +73,25 @@ docker run \
 
 To run the training script in Slurm, use the following command:
 ```bash
-poetry run python launch_sbatch.py \
+poetry run python launch_sbatch.py \                            
     --nodes 1 \
     --gpus_per_node 8 \
-    --config configs/tiny_model.yaml \
-    --run_id test-run
+    --config configs/medium_model.yaml \ 
+    --run_id test-run \
+    --partition applied \
+    --just-testing
 ```
 
-Take note, you will need to update the data mount path in `launch_sbatch.py`.
+## Notes
+1. You will need to update the data mount path in `launch_sbatch.py`.
+2. You will need to add docker as a sudoer to each compute node. For example:
+```bash
+# Open sudoers file safely with visudo
+sudo visudo
+
+# Add the following line
+%docker ALL=(ALL) NOPASSWD: /usr/bin/docker
+```
 
 ## Expected results
 

@@ -142,6 +142,29 @@ def kill_proc():
 def handle_signal(signo: int, _frame: Any):
     sys.exit(128 + signo)
 
+def build_docker_image(args):
+    cmd = [
+        "sudo",
+        "-n",
+        "/usr/bin/docker",
+        "build",
+        "-t",
+        image_tag,
+        "-f",
+        args.image,
+        "."
+    ]
+    
+    if args.dry:
+        cmd = [c if c else "''" for c in cmd]
+        print(" ".join(cmd))
+        return
+    
+    print("Building Docker image:")
+    print(" ".join(cmd))
+    
+    run_proc(cmd)
+
 if __name__ == "__main__":
     proc = None
     atexit.register(kill_proc)
@@ -153,6 +176,7 @@ if __name__ == "__main__":
     parser.add_argument("--run_id", required=True)
     parser.add_argument("--attempt", type=int, required=True)
     parser.add_argument("--dry", action="store_true", help="Dry run - print commands without executing")
+    parser.add_argument("--build", action="store_true", help="Build the Docker image before running")
         
     # Accelerate arguments
     parser.add_argument("--main_process_ip", required=True)
@@ -166,4 +190,7 @@ if __name__ == "__main__":
 
     image_tag = "climax-training:latest"
 
+    if args.build:
+        build_docker_image(args)
+    
     main(args)

@@ -88,6 +88,7 @@ if __name__ == "__main__":
         "--wandb_api_key=$WANDB_API_KEY",
         f"--run_id={run_name}",
         "--attempt=$ATTEMPT",
+        "--build"
     ]
 
     srun_command_parts = [
@@ -101,56 +102,6 @@ if __name__ == "__main__":
     ]
     srun_command = " ".join(srun_command_parts)
 
-    # Add this before the sbatch submission
-    build_script = dedent(
-        """
-        #!/bin/bash
-        set -e  # Exit on any error
-        
-        echo "Current directory: $(pwd)"
-        echo "Directory contents:"
-        ls -la
-        
-        echo "Building Docker image..."
-        DOCKER_BUILDKIT=1 sudo -n docker build -t climax-training:latest . || {
-            echo "Docker build failed"
-            exit 1
-        }
-        
-        echo "Verifying image..."
-        sudo -n docker images | grep climax-training || {
-            echo "Image not found after build"
-            exit 1
-        }
-        
-        echo "Build successful"
-        """
-    ).strip()
-    
-    # Prepare the run's working directory
-    run_path.mkdir(parents=True)
-
-    # Copy all necessary files for Docker build
-    worker_file = run_path / "docker_runner.py"
-    shutil.copy2(SCRIPT_ROOT / "docker_runner.py", worker_file)
-    shutil.copy2(SCRIPT_ROOT / "Dockerfile", run_path / "Dockerfile")
-    
-    # Copy source code and requirements
-    if (SCRIPT_ROOT / "source").exists():
-        shutil.copytree(SCRIPT_ROOT / "source", run_path / "source", dirs_exist_ok=True)
-    if (SCRIPT_ROOT / "requirements.txt").exists():
-        shutil.copy2(SCRIPT_ROOT / "requirements.txt", run_path / "requirements.txt")
-    if (SCRIPT_ROOT / "pyproject.toml").exists():
-        shutil.copy2(SCRIPT_ROOT / "pyproject.toml", run_path / "pyproject.toml")
-    if (SCRIPT_ROOT / "poetry.lock").exists():
-        shutil.copy2(SCRIPT_ROOT / "poetry.lock", run_path / "poetry.lock")
-    
-    # Write the build script
-    build_file = run_path / "build.sh"
-    build_file.write_text(build_script)
-    build_file.chmod(0o755)
-    
-    # Add this to your SLURM script before the main command
     herefile = dedent(
         f"""
         #!/bin/bash
@@ -160,21 +111,6 @@ if __name__ == "__main__":
         #SBATCH --chdir "{run_path}"
         #SBATCH -o "batch.log"
         {('#SBATCH --time "00:15:00"' if args.just_testing else '')}
-
-        # Build the image on each node
-        srun --ntasks={args.nodes} ./build.sh
-        
-        # Check if build was successful
-        if [ $? -ne 0 ]; then
-            echo "Docker build failed"
-            exit 1
-        fi
-
-        # Verify image exists
-        if ! docker images | grep climax-training > /dev/null; then
-            echo "Image climax-training not found after build"
-            exit 1
-        fi
 
         touch ${{SLURM_JOB_ID}}.job-id
 
@@ -206,8 +142,24 @@ if __name__ == "__main__":
         print(herefile)
         sys.exit(0)
 
-    worker_file.chmod(0o755)
+    # Prepare the run's working directory
+    run_path.mkdir(parents=True)
 
+    # Copy all necessary files for Docker build
+    worker_file = run_path / "docker_runner.py"
+    shutil.copy2(SCRIPT_ROOT / "docker_runner.py", worker_file)
+    shutil.copy2(SCRIPT_ROOT / "Dockerfile", run_path / "Dockerfile")
+    
+    # Copy source code and requirements
+    if (SCRIPT_ROOT / "source").exists():
+        shutil.copytree(SCRIPT_ROOT / "source", run_path / "source", dirs_exist_ok=True)
+    if (SCRIPT_ROOT / "requirements.txt").exists():
+        shutil.copy2(SCRIPT_ROOT / "requirements.txt", run_path / "requirements.txt")
+    if (SCRIPT_ROOT / "pyproject.toml").exists():
+        shutil.copy2(SCRIPT_ROOT / "pyproject.toml", run_path / "pyproject.toml")
+    if (SCRIPT_ROOT / "poetry.lock").exists():
+        shutil.copy2(SCRIPT_ROOT / "poetry.lock", run_path / "poetry.lock")
+    
     # Write the batch script
     batch_file = run_path / "batch.sh"
     batch_file.write_text(herefile)

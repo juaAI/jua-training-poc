@@ -39,8 +39,8 @@ persistent_workers: true
 multiprocessing_context: "spawn"
 
 # Data configuration
-stats_path: "mnt/data/jua-silver-layer/all_variables_stats_together.json"
-zarr_path: "mnt/data/jua-bronze-layer/scratch/alex/erax5-toy-2004-2023-180x360.zarr"
+stats_path: "/mnt/data/jua-silver-layer/all_variables_stats_together.json"
+zarr_path: "/mnt/data/jua-bronze-layer/scratch/alex/erax5-toy-2004-2023-180x360.zarr"
 start_date: "1979-01-01"
 end_date: "2019-12-31"
 levels: [100, 500, 1000]  # pressure levels in hPa
