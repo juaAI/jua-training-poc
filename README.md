@@ -73,13 +73,7 @@ docker run \
 
 To run the training script in Slurm, use the following command:
 ```bash
-poetry run python launch_sbatch.py \                            
-    --nodes 1 \
-    --gpus_per_node 8 \
-    --config configs/medium_model.yaml \ 
-    --run_id test-run \
-    --partition applied \
-    --just-testing
+poetry run python launch_sbatch.py --nodes 2 --gpus_per_node 8 --config configs/medium_model.yaml --run_id test-run
 ```
 
 ## Notes
@@ -106,3 +100,4 @@ sudo visudo
 ### Medium model - Total parameters: 1.067 B
 1 GPU - 1776/140227 [02:00<5:56:49,  6.51timestep/s]
 8 GPU's - 2240/17529 [00:54<05:51, 43.51timestep/s]
+16 GPU's - 3408/8765 [00:41<01:02, 85.68timestep/s]
