@@ -86,6 +86,8 @@ class TrainingConfig(BaseModel):
         return {variable: idx for idx, variable in enumerate(self.output_names)}
 
     @classmethod
-    def from_yaml(cls: type[Self], file_path: Path) -> Self:
+    def from_yaml(cls: type[Self], file_path: str) -> Self:
+        # Convert string path to Path object
+        file_path = Path(file_path)
         with file_path.open() as f:
             return cls(**yaml.safe_load(f))

@@ -49,7 +49,4 @@ RUN poetry install --no-root
 # Copy source code
 COPY . .
 
-# Install project
-RUN poetry install
-
-ENTRYPOINT ["poetry", "run", "accelerate", "launch", "source/trainer.py"]
+ENTRYPOINT []

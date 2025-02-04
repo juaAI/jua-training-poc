@@ -326,33 +326,15 @@ def initialize_wandb_run(
     wandb.define_metric("training/epoch")
     wandb.define_metric("training/*", step_metric="training/sample")
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--run_id", type=str)
+    parser.add_argument("--config", "-c", type=str, required=True)
+    parser.add_argument("--wandb_group", type=str)
+    return parser.parse_args()
 
 def main():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "--run_id",
-        "-r",
-        default=None,
-        type=str,
-        help="The run ID to use for this training run.",
-    )
-    parser.add_argument(
-        "--config",
-        "-c",
-        required=True,
-        type=Path,
-        help="The path to the config file to use for this training run.",
-    )
-    parser.add_argument(
-        "--wandb_group",
-        required=False,
-        type=str,
-        help="The wandb group - use the experiment code like 'exp-123'",
-    )
-
-    args = parser.parse_args()
-
+    args = parse_args()
     config = TrainingConfig.from_yaml(args.config)
     accelerator = get_accelerator(config.gradient_accumulation_steps)
 

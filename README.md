@@ -31,28 +31,61 @@ poetry self add poetry-exec-plugin
 
 To run the training script, use the following command:
 ```bash
-poetry run accelerate launch source/trainer.py --config configs/tiny_model.yaml
-```
-
-## Docker Testing
-
-Build the Docker image:
-```bash
-docker build -t climax-training .
-```
-
-Run training in Docker:
-```bash
-docker run --shm-size=8g --gpus all -v <path_to_data>:data climax-training --config configs/tiny_model.yaml
-docker run --shm-size=8g --gpus all -v /mnt/jua-shared-1:/mnt/data/ climax-training --config configs/tiny_model.yaml
+poetry run accelerate launch source/trainer.py --config configs/tiny_model_local.yaml
 ```
 
 ## Running in Slurm
 
+Build the Docker image:
+```bash
+docker build -t climax-training:latest -f Dockerfile .
+```
+
+Test training with the docker image:
+```bash
+docker run \
+  --init \
+  --rm \
+  -m 940g \
+  --shm-size=500g \
+  --gpus all \
+  --network host \
+  --privileged \
+  --ulimit nofile=1000000 \
+  -w /app \
+  -e PYTHONPATH=/app \
+  -v "/usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu" \
+  -v "/opt/hpcx:/opt/hpcx" \
+  -v "/dev/infiniband:/dev/infiniband" \
+  -v "/mnt/jua-shared-1:/mnt/data" \
+  -v "$(pwd)/configs/tiny_model_local.yaml:/app/config.yaml:ro" \
+  -v "/etc/crusoe/nccl_topo/h100-80gb-sxm-ib-cloud-hypervisor.xml:/etc/crusoe/nccl_topo/h100-80gb-sxm-ib-cloud-hypervisor.xml:ro" \
+  -e LD_LIBRARY_PATH=/opt/hpcx/nccl_rdma_sharp_plugin/lib:/opt/hpcx/ucc/lib/ucc:/opt/hpcx/ucc/lib:/opt/hpcx/ucx/lib/ucx:/opt/hpcx/ucx/lib:/opt/hpcx/sharp/lib:/opt/hpcx/hcoll/lib:/opt/hpcx/ompi/lib \
+  -e NCCL_TOPO_FILE=/etc/crusoe/nccl_topo/h100-80gb-sxm-ib-cloud-hypervisor.xml \
+  -e NCCL_SOCKET_NTHREADS=4 \
+  -e NCCL_NSOCKS_PERTHREAD=8 \
+  -e NCCL_IB_MERGE_VFS=0 \
+  -e NCCL_IB_HCA=^mlx5_0:1 \
+  climax-training:latest \
+  poetry run accelerate launch \
+    --multi_gpu \
+    --mixed_precision fp16 \
+    --num_processes 8 \
+    source/trainer.py \
+    --run_id test-run-1 \
+    --config /app/configs/tiny_model.yaml
+```
+
 To run the training script in Slurm, use the following command:
 ```bash
-sbatch scripts/run_training.sh
+poetry run python launch_sbatch.py \
+    --nodes 1 \
+    --gpus_per_node 8 \
+    --config configs/tiny_model.yaml \
+    --run_id test-run
 ```
+
+Take note, you will need to update the data mount path in `launch_sbatch.py`.
 
 ## Expected results
 
